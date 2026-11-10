@@ -7,6 +7,15 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./commit.db")
 
+# Providers hand out Postgres URLs in different shapes (postgres://,
+# postgresql://, postgresql+psycopg://). Normalizing them all to the
+# psycopg (v3) driver means whichever one gets pasted into the environment
+# variable, it matches the single driver listed in requirements.txt.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
 # SQLite needs this extra arg to allow use across FastAPI's request threads;
 # Postgres doesn't need it at all.
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
