@@ -20,7 +20,9 @@ app = FastAPI(title="commit. API", lifespan=lifespan)
 # once this goes beyond local development.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173",
+    "https://unrivaled-sopapillas-760373.netlify.app"],
+    
     allow_methods=["*"],
     allow_headers=["*"],
 )
