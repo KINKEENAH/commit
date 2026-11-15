@@ -26,14 +26,10 @@ def _ensure_initialized() -> None:
 def _send(body: str, to_phone: str) -> None:
     _ensure_initialized()
     sms = africastalking.SMS
-    # The sandbox username ("sandbox") can't use a custom sender id at all
-    # — only a real app can, once "commit." is registered under
-    # SMS > Alphanumerics in the dashboard. Passing one while on sandbox
-    # just errors, so it's left out entirely in that case.
-    if os.getenv("AT_USERNAME") == "sandbox":
+    sender_id = (os.getenv("AT_SENDER_ID") or "").strip()
+    if os.getenv("AT_USERNAME") == "sandbox" or not sender_id:
         response = sms.send(body, [to_phone])
     else:
-        sender_id = os.getenv("AT_SENDER_ID", "commit.")
         response = sms.send(body, [to_phone], sender_id=sender_id)
 
     logger.info("Africa's Talking response: %s", response)
