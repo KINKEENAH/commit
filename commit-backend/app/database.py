@@ -36,3 +36,24 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def ensure_schema() -> None:
+    """Adds columns introduced after a table was first created.
+
+    Base.metadata.create_all() only creates missing TABLES; it never alters
+    an existing one. So when the model gains a column, a database that
+    already has the table (like the live Neon one) needs it added by hand.
+    This does that safely on startup, and does nothing once it's there.
+    """
+    from sqlalchemy import inspect, text
+
+    # Columns added after the first release. Names and types are constants,
+    # so building the ALTER statement from them is safe.
+    added_columns = {"responded_at": "TIMESTAMP", "notify_phone": "VARCHAR"}
+
+    existing = {c["name"] for c in inspect(engine).get_columns("confessions")}
+    for name, column_type in added_columns.items():
+        if name not in existing:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE confessions ADD COLUMN {name} {column_type}"))

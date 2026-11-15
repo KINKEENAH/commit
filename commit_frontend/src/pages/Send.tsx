@@ -10,6 +10,7 @@ export default function Send() {
   const { id } = (location.state as { id?: string }) || {};
 
   const [phone, setPhone] = useState("");
+  const [notifyPhone, setNotifyPhone] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +22,7 @@ export default function Send() {
     setError(null);
     setIsSending(true);
     try {
-      await sendConfession(id, phone);
+      await sendConfession(id, phone, notifyPhone);
       // No login means no other way for the sender to find this
       // confession again later — this is what lets the status page work
       // after a page refresh or a new visit, not just route state.
@@ -48,6 +49,19 @@ export default function Send() {
           placeholder="055 123 4567"
           className="w-full bg-surface border border-border rounded-xl p-3 text-text-primary placeholder-text-muted font-mono text-sm mb-4 focus:outline-none focus:border-accent"
         />
+
+        <label className="block text-text-secondary text-sm mb-2">
+          Your number <span className="text-text-muted">(optional)</span>
+        </label>
+        <input
+          value={notifyPhone}
+          onChange={(e) => setNotifyPhone(e.target.value)}
+          placeholder="055 123 4567"
+          className="w-full bg-surface border border-border rounded-xl p-3 text-text-primary placeholder-text-muted font-mono text-sm mb-2 focus:outline-none focus:border-accent"
+        />
+        <p className="text-xs text-text-muted mb-4">
+          We'll text you once when they reply, then delete your number. They never see it.
+        </p>
 
         {error && <p className="text-xs text-danger mb-4">{error}</p>}
 

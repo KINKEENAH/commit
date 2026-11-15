@@ -1,19 +1,32 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 import Logo from "../components/Logo";
 import { fetchStatus } from "../lib/api";
 
 type StatusValue = "draft" | "pending" | "response_received";
 
+const POLL_MS = 15000;
+
+function formatWhen(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 export default function Status() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const stateId = (location.state as { id?: string } | null)?.id;
+  // The "they replied" text links to /status?id=..., so the page also works
+  // on a device that never sent the confession. Ids are 8 hex characters;
+  // anything else in the URL is ignored.
+  const rawQueryId = searchParams.get("id");
+  const queryId = rawQueryId && /^[a-f0-9]{8}$/.test(rawQueryId) ? rawQueryId : null;
   // Falls back to the id saved on Send — this is what makes the status
   // page work even after a refresh, when route state is gone.
-  const id = stateId ?? localStorage.getItem("commit_last_confession_id");
+  const id = stateId ?? queryId ?? localStorage.getItem("commit_last_confession_id");
 
   const [status, setStatus] = useState<StatusValue | null>(null);
   const [response, setResponse] = useState<string | null>(null);
+  const [respondedAt, setRespondedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -21,12 +34,30 @@ export default function Status() {
       setError("No confession to check yet — send one first.");
       return;
     }
-    fetchStatus(id)
-      .then((data) => {
+    let cancelled = false;
+    let timer: number | undefined;
+
+    // Re-checks every 15s while still pending, so a reply shows up without
+    // the sender having to refresh. Stops once a reply has arrived.
+    const load = async () => {
+      try {
+        const data = await fetchStatus(id);
+        if (cancelled) return;
         setStatus(data.status as StatusValue);
         setResponse(data.response);
-      })
-      .catch(() => setError("Couldn't reach the backend."));
+        setRespondedAt(data.responded_at);
+        setError(null);
+        if (data.status === "pending") timer = window.setTimeout(load, POLL_MS);
+      } catch {
+        if (!cancelled) setError("Couldn't reach the backend.");
+      }
+    };
+    load();
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
   }, [id]);
 
   return (
@@ -48,13 +79,25 @@ export default function Status() {
                   : "DRAFT"}
               </div>
             </div>
-            <p className="text-text-secondary text-sm">
-              {status === "pending"
-                ? "Delivered. We'll keep nudging them until they respond."
-                : status === "response_received"
-                ? `They replied: "${response}"`
-                : "Not sent yet."}
-            </p>
+
+            {status === "pending" && (
+              <p className="text-text-secondary text-sm">
+                Delivered. We'll keep nudging them until they respond. This page checks for a
+                reply on its own.
+              </p>
+            )}
+
+            {status === "draft" && <p className="text-text-secondary text-sm">Not sent yet.</p>}
+
+            {status === "response_received" && (
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-xs font-mono text-text-secondary tracking-wide mb-2">THEIR REPLY</p>
+                <p className="text-text-primary leading-relaxed whitespace-pre-wrap">{response}</p>
+                {respondedAt && (
+                  <p className="text-xs text-text-muted mt-3">Replied {formatWhen(respondedAt)}</p>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

@@ -157,3 +157,29 @@ changes.
   `"error"`) since a real network call can actually fail, unlike the old
   hardcoded placeholders which couldn't.
 
+
+## 7. Replies and the sender's status page
+
+- `Recipient.tsx` now has the three quick replies **and** a "write your own"
+  box. Both call `submitReply()`. It deliberately waits for the server before
+  confirming (the earlier version showed "sent" immediately and ignored
+  failures), because a long typed reply that silently failed to send would be
+  worse than losing a one-tap preset.
+- `Status.tsx` shows the reply text and the time it arrived. While the
+  status is still `pending` it re-checks every 15 seconds with a
+  self-rescheduling `setTimeout` (and cancels it on unmount), so a reply
+  appears without a refresh. It stops polling as soon as a reply is in.
+- The reply is rendered as plain text with `whitespace-pre-wrap`, so line
+  breaks survive and nothing the recipient types can be interpreted as markup.
+
+## 8. Optional "text me when they reply" and the Unicode fix
+
+- `Send.tsx` has an optional "Your number" field. `api.sendConfession()` only
+  includes `notify_phone` when the box isn't empty.
+- `Status.tsx` also accepts `/status?id=<8 hex chars>`, which is the link in
+  the alert text, so it works on a phone that never sent the confession.
+  Order of precedence: route state, then the URL, then localStorage.
+- `encoding.ts` now encodes through UTF-8 bytes. `btoa()` throws on anything
+  outside Latin-1 (emoji, curly quotes, em dashes), which blanked the
+  Preview and Recipient pages for the JavaScript option. Hex now uses the same
+  bytes, so `xxd -r -p` decodes it correctly.

@@ -31,10 +31,18 @@ export function createConfession(message: string, language: LanguageId) {
   });
 }
 
-export function sendConfession(id: string, recipientPhone: string) {
+export function sendConfession(id: string, recipientPhone: string, notifyPhone?: string) {
+  const body: { recipient_phone: string; notify_phone?: string } = {
+    recipient_phone: recipientPhone,
+  };
+  // Omitted entirely when the sender left the box empty (the backend treats
+  // a missing value as "don't text me").
+  const notify = notifyPhone?.trim();
+  if (notify) body.notify_phone = notify;
+
   return request<{ status: string }>(`/confessions/${id}/send`, {
     method: "POST",
-    body: JSON.stringify({ recipient_phone: recipientPhone }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -50,5 +58,7 @@ export function respondToConfession(id: string, response: string) {
 }
 
 export function fetchStatus(id: string) {
-  return request<{ status: string; response: string | null }>(`/confessions/${id}/status`);
+  return request<{ status: string; response: string | null; responded_at: string | null }>(
+    `/confessions/${id}/status`
+  );
 }

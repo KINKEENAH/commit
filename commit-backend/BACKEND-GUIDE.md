@@ -124,3 +124,43 @@ The frontend (`CreateConfession.tsx`, `Preview.tsx`, `Send.tsx`,
 `Status.tsx`, `Recipient.tsx`) still has its original `// TODO` comments —
 none of it calls this API yet. That's the next piece: swapping each TODO
 for a real `fetch()` call to the matching endpoint above.
+
+## 11. Replies, timestamps, and changing the schema later
+
+- The recipient can now send a **free-text reply** (up to 500 characters) as
+  well as one of the three quick replies. Both go through the same
+  `POST /confessions/{id}/respond` endpoint; the backend doesn't care which.
+- `crud.record_response()` also stamps **`responded_at`**, returned by the
+  status endpoint as an explicit UTC time so the sender's browser can show it
+  in their own timezone.
+- **Why `ensure_schema()` exists:** `Base.metadata.create_all()` only creates
+  *missing tables*. It never alters one that already exists, so adding the
+  `responded_at` column to the model alone would have left the live Neon table
+  without it, and every status request would have failed. `ensure_schema()`
+  checks for the column on startup and adds it if missing; once it's there it
+  does nothing. This is a deliberately small stand-in for a real migration
+  tool. Alembic (which you've used on the banking API) is the proper answer
+  once the schema changes more than occasionally.
+
+## 12. "They replied" text for the sender, and the sender id fix
+
+- `SendRequest` takes an optional **`notify_phone`**: the sender's own number.
+  A blank value means "no thanks" (a validator turns it into `None`), and a
+  value with fewer than 7 digits is rejected with a 422.
+- The number is stored in a nullable `confessions.notify_phone` column.
+  `ensure_schema()` adds the column on startup (it now loops over a small
+  dict of added columns), so the live Neon table needs no manual SQL.
+- When the recipient replies, `respond_to_confession` calls
+  `crud.pop_notify_phone()`, which **returns the number and erases it**, then
+  queues `sms.send_reply_alert()` as a FastAPI background task. Consequences:
+  the sender is texted at most once; the recipient's request never waits on
+  the SMS provider; a failed alert is logged and never breaks the reply; and
+  the number isn't kept after it has been used.
+- The alert contains a link (`/status?id=...`) and never the reply text.
+  No response schema includes `notify_phone`, so it is never exposed.
+- **Sender id:** `sms._send` only passes `sender_id` when `AT_SENDER_ID` is
+  non-empty, and never on the sandbox. The old `"commit."` fallback is gone:
+  an unapproved or empty sender id makes Africa's Talking answer
+  `InvalidSenderId`. Leave `AT_SENDER_ID` unset until the name is approved.
+- `main.py` now lists the Netlify origin, and `CORS_ORIGINS` (comma-separated)
+  can add more without a code change.

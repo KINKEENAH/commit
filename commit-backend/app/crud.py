@@ -16,8 +16,14 @@ def get_confession(db: Session, confession_id: str) -> Optional[models.Confessio
     return db.get(models.Confession, confession_id)
 
 
-def mark_sent(db: Session, confession: models.Confession, recipient_phone: str) -> models.Confession:
+def mark_sent(
+    db: Session,
+    confession: models.Confession,
+    recipient_phone: str,
+    notify_phone: Optional[str] = None,
+) -> models.Confession:
     confession.recipient_phone = recipient_phone
+    confession.notify_phone = notify_phone
     confession.status = "pending"
     confession.last_reminded_at = datetime.now(timezone.utc)
     db.commit()
@@ -28,9 +34,21 @@ def mark_sent(db: Session, confession: models.Confession, recipient_phone: str) 
 def record_response(db: Session, confession: models.Confession, response: str) -> models.Confession:
     confession.status = "response_received"
     confession.response = response
+    confession.responded_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(confession)
     return confession
+
+
+def pop_notify_phone(db: Session, confession: models.Confession) -> Optional[str]:
+    """Returns the sender's opt-in alert number and erases it, so it is used
+    for exactly one text and isn't kept once it has done its job."""
+    phone = confession.notify_phone
+    if phone:
+        confession.notify_phone = None
+        db.commit()
+        db.refresh(confession)
+    return phone
 
 
 def get_pending_for_reminder(db: Session, max_count: int):

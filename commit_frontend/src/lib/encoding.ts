@@ -9,7 +9,7 @@ export type LanguageId = "js" | "python" | "terminal" | "plain";
 export function encodeMessage(message: string, language: LanguageId): string {
   switch (language) {
     case "js":
-      return btoa(message);
+      return toBase64(message);
     case "python":
       return rot13(message);
     case "terminal":
@@ -23,7 +23,7 @@ export function encodeMessage(message: string, language: LanguageId): string {
 export function decodeMessage(value: string, language: LanguageId): string {
   switch (language) {
     case "js":
-      return atob(value);
+      return fromBase64(value);
     case "python":
       return rot13(value); // ROT13 is its own inverse — encoding it twice returns the original
     case "terminal":
@@ -40,15 +40,31 @@ function rot13(str: string): string {
   });
 }
 
+// btoa()/atob() only handle Latin-1, so emoji, curly quotes, em dashes and
+// accented letters make them throw (and blank the page). Going through
+// UTF-8 bytes first handles any text, and round-trips exactly.
+const utf8Encoder = new TextEncoder();
+const utf8Decoder = new TextDecoder();
+
+function toBase64(str: string): string {
+  let binary = "";
+  utf8Encoder.encode(str).forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
+}
+
+function fromBase64(b64: string): string {
+  const binary = atob(b64);
+  return utf8Decoder.decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)));
+}
+
+// Hex of the UTF-8 bytes, which is also what `xxd -r -p` turns back into text.
 function toHex(str: string): string {
-  return Array.from(str)
-    .map((c) => c.charCodeAt(0).toString(16).padStart(2, "0"))
-    .join("");
+  return Array.from(utf8Encoder.encode(str), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 function fromHex(hex: string): string {
-  // Simple ASCII round-trip — good enough for this demo, not meant to
-  // handle full multi-byte Unicode confessions.
-  const bytes = hex.match(/.{1,2}/g) || [];
-  return bytes.map((b) => String.fromCharCode(parseInt(b, 16))).join("");
+  const pairs = hex.match(/.{1,2}/g) || [];
+  return utf8Decoder.decode(Uint8Array.from(pairs, (h) => parseInt(h, 16)));
 }

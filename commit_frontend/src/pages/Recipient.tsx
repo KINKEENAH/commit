@@ -22,6 +22,9 @@ export default function Recipient() {
   const [decoded, setDecoded] = useState("");
   const [revealedCount, setRevealedCount] = useState(0);
   const [responded, setResponded] = useState<string | null>(null);
+  const [custom, setCustom] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   // The real fetch, replacing the old hardcoded placeholder — this is what
   // makes two different links actually show two different confessions.
@@ -68,13 +71,21 @@ export default function Recipient() {
 
   const fullyRevealed = stage === "revealed" && words.length > 0 && revealedCount >= words.length;
 
-  const handleRespond = (response: string) => {
-    if (!id) return;
-    // Optimistic — shows the confirmation immediately rather than waiting
-    // on the network. If the request fails, the sender's status just never
-    // flips, which is a quiet failure worth revisiting later with a retry.
-    setResponded(response);
-    respondToConfession(id, response).catch(() => {});
+  const submitReply = async (reply: string) => {
+    const text = reply.trim();
+    if (!id || !text || sending) return;
+    // Waits for the server before confirming. A written reply that quietly
+    // failed to send would be worse than a preset one, so errors show here.
+    setSendError(null);
+    setSending(true);
+    try {
+      await respondToConfession(id, text);
+      setResponded(text);
+    } catch {
+      setSendError("Couldn't send your reply. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -132,17 +143,41 @@ export default function Recipient() {
                   key={r}
                   variant="secondary"
                   className="flex-1"
-                  onClick={() => handleRespond(r)}
+                  onClick={() => submitReply(r)}
                 >
                   {r}
                 </Button>
               ))}
             </div>
+
+            <p className="text-xs font-mono text-text-secondary tracking-wide mt-6 mb-2">
+              OR WRITE YOUR OWN
+            </p>
+            <textarea
+              value={custom}
+              onChange={(e) => setCustom(e.target.value.slice(0, 500))}
+              placeholder="Write your reply..."
+              className="w-full min-h-[100px] bg-surface border border-border rounded-xl p-4 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent"
+            />
+            <p className="text-right text-xs text-text-muted mb-3">{custom.length} / 500</p>
+            {sendError && <p className="text-xs text-danger mb-3">{sendError}</p>}
+            <Button
+              variant="primary"
+              disabled={!custom.trim() || sending}
+              onClick={() => submitReply(custom)}
+            >
+              {sending ? "Sending…" : "Send reply"}
+            </Button>
           </>
         )}
 
         {responded && (
-          <p className="text-text-secondary text-sm">Your response has been sent.</p>
+          <div className="bg-surface border border-border rounded-xl p-4">
+            <p className="text-xs font-mono text-text-secondary tracking-wide mb-2">
+              YOUR REPLY WAS SENT
+            </p>
+            <p className="text-text-primary whitespace-pre-wrap">{responded}</p>
+          </div>
         )}
       </div>
     </div>

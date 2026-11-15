@@ -26,6 +26,11 @@ def _ensure_initialized() -> None:
 def _send(body: str, to_phone: str) -> None:
     _ensure_initialized()
     sms = africastalking.SMS
+    # A custom sender id is only sent when one is configured. The sandbox
+    # can't use one at all, and a production app can't either until the
+    # name has been approved. In both cases leave it out and Africa's
+    # Talking uses its default sender. Passing an unapproved one (or an
+    # empty string) fails with InvalidSenderId.
     sender_id = (os.getenv("AT_SENDER_ID") or "").strip()
     if os.getenv("AT_USERNAME") == "sandbox" or not sender_id:
         response = sms.send(body, [to_phone])
@@ -50,3 +55,9 @@ def send_confession_link(to_phone: str, confession_id: str) -> None:
 def send_reminder(to_phone: str, confession_id: str) -> None:
     base_url = os.getenv("APP_BASE_URL", "http://localhost:5173")
     _send(f"Still waiting on you. {base_url}/r/{confession_id}", to_phone)
+
+
+def send_reply_alert(to_phone: str, confession_id: str) -> None:
+    # Link only, never the reply text: an SMS isn't a private channel.
+    base_url = os.getenv("APP_BASE_URL", "http://localhost:5173")
+    _send(f"commit.: they replied. See it here: {base_url}/status?id={confession_id}", to_phone)

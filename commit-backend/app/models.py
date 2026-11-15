@@ -19,10 +19,14 @@ class Confession(Base):
     message = Column(Text, nullable=False)
     language = Column(String, nullable=False)  # "js" | "python" | "terminal" | "plain"
     recipient_phone = Column(String, nullable=True)
+    # The sender's own number, only if they opted in to a "they replied" text.
+    # Cleared as soon as that one text is queued, and never returned by any endpoint.
+    notify_phone = Column(String, nullable=True)
     # draft = created but not sent yet; pending = sent, waiting on a reply;
     # response_received = recipient replied.
     status = Column(String, nullable=False, default="draft")
     response = Column(String, nullable=True)
+    responded_at = Column(DateTime, nullable=True)
     reminder_count = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_reminded_at = Column(DateTime, nullable=True)
