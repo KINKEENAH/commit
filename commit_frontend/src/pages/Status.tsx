@@ -27,6 +27,7 @@ export default function Status() {
   const [status, setStatus] = useState<StatusValue | null>(null);
   const [response, setResponse] = useState<string | null>(null);
   const [respondedAt, setRespondedAt] = useState<string | null>(null);
+  const [readAt, setReadAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function Status() {
         setStatus(data.status as StatusValue);
         setResponse(data.response);
         setRespondedAt(data.responded_at);
+        setReadAt(data.read_at);
         setError(null);
         if (data.status === "pending") timer = window.setTimeout(load, POLL_MS);
       } catch {
@@ -78,12 +80,26 @@ export default function Status() {
                   ? "RESPONSE_RECEIVED"
                   : "DRAFT"}
               </div>
+              {status !== "draft" && (
+                <>
+                  <div className="text-text-muted mt-3">$ read</div>
+                  <div className={readAt ? "text-code-number" : "text-text-secondary"}>
+                    {readAt ? `YES · ${formatWhen(readAt)}` : "NO"}
+                  </div>
+                </>
+              )}
             </div>
 
-            {status === "pending" && (
+            {status === "pending" && !readAt && (
               <p className="text-text-secondary text-sm">
-                Delivered. We'll keep nudging them until they respond. This page checks for a
-                reply on its own.
+                Sent, but not read yet. We'll nudge them a few times if they don't open it. This
+                page checks on its own.
+              </p>
+            )}
+
+            {status === "pending" && readAt && (
+              <p className="text-text-secondary text-sm">
+                They've read it. Waiting on a reply, and this page checks on its own.
               </p>
             )}
 

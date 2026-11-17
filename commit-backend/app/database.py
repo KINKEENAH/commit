@@ -50,7 +50,11 @@ def ensure_schema() -> None:
 
     # Columns added after the first release. Names and types are constants,
     # so building the ALTER statement from them is safe.
-    added_columns = {"responded_at": "TIMESTAMP", "notify_phone": "VARCHAR"}
+    added_columns = {
+        "responded_at": "TIMESTAMP",
+        "notify_phone": "VARCHAR",
+        "read_at": "TIMESTAMP",
+    }
 
     existing = {c["name"] for c in inspect(engine).get_columns("confessions")}
     for name, column_type in added_columns.items():

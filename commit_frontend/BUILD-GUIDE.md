@@ -183,3 +183,12 @@ changes.
   outside Latin-1 (emoji, curly quotes, em dashes), which blanked the
   Preview and Recipient pages for the JavaScript option. Hex now uses the same
   bytes, so `xxd -r -p` decodes it correctly.
+
+## 9. Read receipt and the note beside Run
+
+- `Recipient.tsx` calls `markRead(id)` when Run is pressed (or on load for
+  plain text) and ignores any failure, so a network hiccup never blocks
+  reading. A short note above Run says nothing is installed and that the
+  sender will see it was read; plain-text messages carry a similar line.
+- `Status.tsx` shows a `$ read` line (NO, or YES with the time) and different
+  pending copy for "not read yet" and "read, waiting for a reply".

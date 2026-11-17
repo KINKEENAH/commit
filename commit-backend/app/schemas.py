@@ -53,6 +53,7 @@ class StatusResponse(BaseModel):
     status: Literal["draft", "pending", "response_received"]
     response: Optional[str] = None
     responded_at: Optional[datetime] = None
+    read_at: Optional[datetime] = None
 
 
 class RespondRequest(BaseModel):

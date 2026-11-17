@@ -164,3 +164,18 @@ for a real `fetch()` call to the matching endpoint above.
   `InvalidSenderId`. Leave `AT_SENDER_ID` unset until the name is approved.
 - `main.py` now lists the Netlify origin, and `CORS_ORIGINS` (comma-separated)
   can add more without a code change.
+
+## 13. Read receipts
+
+- New nullable column `confessions.read_at` (added by `ensure_schema()` on
+  startup, like the others).
+- `POST /confessions/{id}/read` sets it the first time it's called and never
+  moves it afterwards. It's a POST on purpose: the recipient page calls it
+  when the message is actually shown (on Run, or straight away for plain
+  text), so link-preview bots that only fetch the page can't trigger a false
+  "read". Draft confessions return 404.
+- `record_response` also sets `read_at` if it was empty, since a reply
+  implies it was read.
+- `GET /confessions/{id}/status` now returns `read_at`.
+- Reminders skip anything with `read_at` set (`get_pending_for_reminder`), so
+  a recipient who has read the message is no longer nudged.

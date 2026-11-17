@@ -57,8 +57,15 @@ export function respondToConfession(id: string, response: string) {
   });
 }
 
+export function markRead(id: string) {
+  return request<{ ok: boolean }>(`/confessions/${id}/read`, { method: "POST" });
+}
+
 export function fetchStatus(id: string) {
-  return request<{ status: string; response: string | null; responded_at: string | null }>(
-    `/confessions/${id}/status`
-  );
+  return request<{
+    status: string;
+    response: string | null;
+    responded_at: string | null;
+    read_at: string | null;
+  }>(`/confessions/${id}/status`);
 }

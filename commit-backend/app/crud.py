@@ -31,10 +31,23 @@ def mark_sent(
     return confession
 
 
+def mark_read(db: Session, confession: models.Confession) -> models.Confession:
+    """Records the first time the message was read. Later calls change nothing,
+    so reloading the page can't move the timestamp."""
+    if confession.read_at is None:
+        confession.read_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(confession)
+    return confession
+
+
 def record_response(db: Session, confession: models.Confession, response: str) -> models.Confession:
+    now = datetime.now(timezone.utc)
     confession.status = "response_received"
     confession.response = response
-    confession.responded_at = datetime.now(timezone.utc)
+    confession.responded_at = now
+    if confession.read_at is None:
+        confession.read_at = now  # a reply implies it was read
     db.commit()
     db.refresh(confession)
     return confession
@@ -55,6 +68,7 @@ def get_pending_for_reminder(db: Session, max_count: int):
     return (
         db.query(models.Confession)
         .filter(models.Confession.status == "pending")
+        .filter(models.Confession.read_at.is_(None))  # stop nudging once it's been read
         .filter(models.Confession.reminder_count < max_count)
         .all()
     )

@@ -20,12 +20,20 @@ def _alert_sender(phone: str, confession_id: str) -> None:
         logger.exception("Reply alert failed for confession %s", confession_id)
 
 
-def _status_payload(confession):
-    # The column stores naive UTC; mark it as UTC so clients parse it correctly.
-    at = confession.responded_at
+def _as_utc(at):
+    # The columns store naive UTC; mark them as UTC so clients parse them correctly.
     if at is not None and at.tzinfo is None:
-        at = at.replace(tzinfo=timezone.utc)
-    return {"status": confession.status, "response": confession.response, "responded_at": at}
+        return at.replace(tzinfo=timezone.utc)
+    return at
+
+
+def _status_payload(confession):
+    return {
+        "status": confession.status,
+        "response": confession.response,
+        "responded_at": _as_utc(confession.responded_at),
+        "read_at": _as_utc(confession.read_at),
+    }
 
 
 @router.post("", response_model=schemas.ConfessionCreated)
@@ -60,6 +68,18 @@ def get_confession(confession_id: str, db: Session = Depends(get_db)):
     if not confession:
         raise HTTPException(status_code=404, detail="Confession not found")
     return confession
+
+
+@router.post("/{confession_id}/read")
+def mark_confession_read(confession_id: str, db: Session = Depends(get_db)):
+    # Called by the recipient page when the message is actually shown to them.
+    # A POST (not the GET that loads the message) so link-preview bots that
+    # only fetch the page never trigger it.
+    confession = crud.get_confession(db, confession_id)
+    if not confession or confession.status == "draft":
+        raise HTTPException(status_code=404, detail="Confession not found")
+    crud.mark_read(db, confession)
+    return {"ok": True}
 
 
 @router.post("/{confession_id}/respond", response_model=schemas.StatusResponse)

@@ -27,6 +27,10 @@ class Confession(Base):
     status = Column(String, nullable=False, default="draft")
     response = Column(String, nullable=True)
     responded_at = Column(DateTime, nullable=True)
+    # Set the first time the recipient actually reads the message (presses Run,
+    # or sees a plain-text message). Opening the link alone doesn't count, so
+    # link-preview bots don't produce false "read" receipts.
+    read_at = Column(DateTime, nullable=True)
     reminder_count = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_reminded_at = Column(DateTime, nullable=True)
