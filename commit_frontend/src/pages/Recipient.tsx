@@ -9,8 +9,6 @@ import { getLanguage } from "../lib/languages";
 import type { LanguageId } from "../lib/encoding";
 import { fetchConfession, respondToConfession, markRead } from "../lib/api";
 
-const RESPONSES = ["I feel it too", "Let's talk", "Not right now"];
-
 type Stage = "loading" | "encoded" | "decoding" | "revealed" | "error";
 
 export default function Recipient() {
@@ -179,22 +177,7 @@ export default function Recipient() {
             <p className="text-xs font-mono text-text-secondary tracking-wide mb-3">
               RESPOND
             </p>
-            <div className="flex flex-col md:flex-row gap-2">
-              {RESPONSES.map((r) => (
-                <Button
-                  key={r}
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={() => submitReply(r)}
-                >
-                  {r}
-                </Button>
-              ))}
-            </div>
 
-            <p className="text-xs font-mono text-text-secondary tracking-wide mt-6 mb-2">
-              OR WRITE YOUR OWN
-            </p>
             <textarea
               value={custom}
               onChange={(e) => setCustom(e.target.value.slice(0, 500))}
