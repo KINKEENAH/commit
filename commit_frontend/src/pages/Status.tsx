@@ -25,6 +25,8 @@ export default function Status() {
   const id = stateId ?? queryId ?? localStorage.getItem("commit_last_confession_id");
 
   const [status, setStatus] = useState<StatusValue | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [sentAt, setSentAt] = useState<string | null>(null);
   const [response, setResponse] = useState<string | null>(null);
   const [respondedAt, setRespondedAt] = useState<string | null>(null);
   const [readAt, setReadAt] = useState<string | null>(null);
@@ -45,6 +47,8 @@ export default function Status() {
         const data = await fetchStatus(id);
         if (cancelled) return;
         setStatus(data.status as StatusValue);
+        setMessage(data.message);
+        setSentAt(data.sent_at);
         setResponse(data.response);
         setRespondedAt(data.responded_at);
         setReadAt(data.read_at);
@@ -105,13 +109,36 @@ export default function Status() {
 
             {status === "draft" && <p className="text-text-secondary text-sm">Not sent yet.</p>}
 
-            {status === "response_received" && (
-              <div className="bg-surface border border-border rounded-xl p-4">
-                <p className="text-xs font-mono text-text-secondary tracking-wide mb-2">THEIR REPLY</p>
-                <p className="text-text-primary leading-relaxed whitespace-pre-wrap">{response}</p>
-                {respondedAt && (
-                  <p className="text-xs text-text-muted mt-3">Replied {formatWhen(respondedAt)}</p>
-                )}
+            {/* The log: the sender's message and, once it arrives, the reply. */}
+            {status !== "draft" && message !== null && (
+              <div className="bg-surface border border-border rounded-xl p-4 mt-4">
+                <div className="font-mono text-sm text-text-muted">$ log</div>
+
+                <div className="mt-3">
+                  <div className="font-mono text-xs text-code-function">
+                    you{sentAt ? ` · ${formatWhen(sentAt)}` : ""}
+                  </div>
+                  <p className="text-text-primary leading-relaxed whitespace-pre-wrap mt-1">
+                    {message}
+                  </p>
+                </div>
+
+                <div className="mt-4">
+                  {response ? (
+                    <>
+                      <div className="font-mono text-xs text-accent">
+                        them{respondedAt ? ` · ${formatWhen(respondedAt)}` : ""}
+                      </div>
+                      <p className="text-text-primary leading-relaxed whitespace-pre-wrap mt-1">
+                        {response}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="font-mono text-sm text-text-secondary">
+                      waiting for reply<span className="animate-pulse">_</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </>

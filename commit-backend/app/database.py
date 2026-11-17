@@ -54,6 +54,7 @@ def ensure_schema() -> None:
         "responded_at": "TIMESTAMP",
         "notify_phone": "VARCHAR",
         "read_at": "TIMESTAMP",
+        "sent_at": "TIMESTAMP",
     }
 
     existing = {c["name"] for c in inspect(engine).get_columns("confessions")}

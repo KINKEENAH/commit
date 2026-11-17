@@ -25,7 +25,9 @@ def mark_sent(
     confession.recipient_phone = recipient_phone
     confession.notify_phone = notify_phone
     confession.status = "pending"
-    confession.last_reminded_at = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    confession.sent_at = now
+    confession.last_reminded_at = now
     db.commit()
     db.refresh(confession)
     return confession

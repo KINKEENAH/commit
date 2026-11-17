@@ -179,3 +179,12 @@ for a real `fetch()` call to the matching endpoint above.
 - `GET /confessions/{id}/status` now returns `read_at`.
 - Reminders skip anything with `read_at` set (`get_pending_for_reminder`), so
   a recipient who has read the message is no longer nudged.
+
+## 14. The sender's log (one message, one reply)
+
+- `GET /confessions/{id}/status` (and the `/respond` response) now also
+  return `message` and `sent_at`, so the sender's page can show their own
+  message next to the reply. The recipient already reads the same message
+  with the same id, so nothing new is exposed.
+- `sent_at` is a new nullable column, set in `crud.mark_sent`. Older rows
+  fall back to `created_at`. `ensure_schema()` adds the column on startup.

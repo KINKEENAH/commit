@@ -30,6 +30,8 @@ def _as_utc(at):
 def _status_payload(confession):
     return {
         "status": confession.status,
+        "message": confession.message,
+        "sent_at": _as_utc(confession.sent_at or confession.created_at),
         "response": confession.response,
         "responded_at": _as_utc(confession.responded_at),
         "read_at": _as_utc(confession.read_at),

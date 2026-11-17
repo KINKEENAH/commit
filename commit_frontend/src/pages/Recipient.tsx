@@ -52,10 +52,7 @@ export default function Recipient() {
   }, [id]);
 
   const isPlain = language === "plain";
-  const encoded =
-    stage === "loading" || stage === "error" || isPlain
-      ? ""
-      : encodeMessage(message, language);
+  const encoded = stage === "loading" || stage === "error" || isPlain ? "" : encodeMessage(message, language);
   const words = decoded.split(" ").filter(Boolean);
 
   const handleRun = () => {
@@ -77,8 +74,7 @@ export default function Recipient() {
     return () => clearTimeout(t);
   }, [stage, revealedCount, words.length]);
 
-  const fullyRevealed =
-    stage === "revealed" && words.length > 0 && revealedCount >= words.length;
+  const fullyRevealed = stage === "revealed" && words.length > 0 && revealedCount >= words.length;
 
   const submitReply = async (reply: string) => {
     const text = reply.trim();
@@ -102,14 +98,11 @@ export default function Recipient() {
       <div className="max-w-md mx-auto">
         <Logo muted />
 
-        {stage === "loading" && (
-          <p className="text-text-secondary text-sm mt-6">Loading…</p>
-        )}
+        {stage === "loading" && <p className="text-text-secondary text-sm mt-6">Loading…</p>}
 
         {stage === "error" && (
           <p className="text-sm text-danger mt-6">
-            Couldn't load this confession — the link may be wrong, or the
-            backend isn't running.
+            Couldn't load this confession — the link may be wrong, or the backend isn't running.
           </p>
         )}
 
@@ -124,58 +117,45 @@ export default function Recipient() {
           </>
         )}
 
-        {!isPlain &&
-          (stage === "encoded" ||
-            stage === "decoding" ||
-            stage === "revealed") && (
-            <>
-              <div className="mt-6 mb-6">
-                <CodeBlock tag={getLanguage(language).tag}>
-                  {stage === "encoded" && (
-                    <EncodedLines language={language} encoded={encoded} />
-                  )}
-                  {stage === "decoding" && (
-                    <div className="text-code-number">
-                      $ decoding<span className="animate-pulse">_</span>
-                    </div>
-                  )}
-                  {stage === "revealed" && (
-                    <div className="text-code-plain">
-                      &gt; "{words.slice(0, revealedCount).join(" ")}
-                      {fullyRevealed ? (
-                        '"'
-                      ) : (
-                        <span className="animate-pulse ml-0.5">_</span>
-                      )}
-                    </div>
-                  )}
-                </CodeBlock>
-              </div>
+        {!isPlain && (stage === "encoded" || stage === "decoding" || stage === "revealed") && (
+          <>
+            <div className="mt-6 mb-6">
+              <CodeBlock tag={getLanguage(language).tag}>
+                {stage === "encoded" && <EncodedLines language={language} encoded={encoded} />}
+                {stage === "decoding" && (
+                  <div className="text-code-number">
+                    $ decoding<span className="animate-pulse">_</span>
+                  </div>
+                )}
+                {stage === "revealed" && (
+                  <div className="text-code-plain">
+                    &gt; "{words.slice(0, revealedCount).join(" ")}
+                    {fullyRevealed ? '"' : <span className="animate-pulse ml-0.5">_</span>}
+                  </div>
+                )}
+              </CodeBlock>
+            </div>
 
-              {stage === "encoded" && (
-                <>
-                  <p className="text-sm text-text-secondary leading-relaxed mb-2">
-                    This is commit. Someone sent you an anonymous message,
-                    encoded as code. Run it to decode.
-                  </p>
-
-                  <Button
-                    variant="primary"
-                    onClick={handleRun}
-                    className="w-full mb-8"
-                  >
-                    ▶ Run
-                  </Button>
-                </>
-              )}
-            </>
-          )}
+            {stage === "encoded" && (
+              <>
+                <p className="text-sm text-text-secondary leading-relaxed mb-2">
+                  This is commit. It's built to send anonymous messages in a code form or a techy
+                  way. Just run the code to decode the message.
+                </p>
+                <p className="text-xs text-text-muted mb-4">
+                  Nothing is installed. The sender will be able to see that you've read it.
+                </p>
+                <Button variant="primary" onClick={handleRun} className="w-full mb-8">
+                  ▶ Run
+                </Button>
+              </>
+            )}
+          </>
+        )}
 
         {fullyRevealed && !responded && (
           <>
-            <p className="text-xs font-mono text-text-secondary tracking-wide mb-3">
-              RESPOND
-            </p>
+            <p className="text-xs font-mono text-text-secondary tracking-wide mb-3">RESPOND</p>
             <div className="flex flex-col md:flex-row gap-2">
               {RESPONSES.map((r) => (
                 <Button
@@ -198,12 +178,8 @@ export default function Recipient() {
               placeholder="Write your reply..."
               className="w-full min-h-[100px] bg-surface border border-border rounded-xl p-4 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent"
             />
-            <p className="text-right text-xs text-text-muted mb-3">
-              {custom.length} / 500
-            </p>
-            {sendError && (
-              <p className="text-xs text-danger mb-3">{sendError}</p>
-            )}
+            <p className="text-right text-xs text-text-muted mb-3">{custom.length} / 500</p>
+            {sendError && <p className="text-xs text-danger mb-3">{sendError}</p>}
             <Button
               variant="primary"
               disabled={!custom.trim() || sending}

@@ -51,6 +51,11 @@ class ConfessionPublic(BaseModel):
 
 class StatusResponse(BaseModel):
     status: Literal["draft", "pending", "response_received"]
+    # The sender's own message and when it was sent, for the log view. The
+    # recipient can already read the message with the same id, so this
+    # exposes nothing new.
+    message: Optional[str] = None
+    sent_at: Optional[datetime] = None
     response: Optional[str] = None
     responded_at: Optional[datetime] = None
     read_at: Optional[datetime] = None

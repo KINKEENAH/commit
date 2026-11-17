@@ -192,3 +192,13 @@ changes.
   sender will see it was read; plain-text messages carry a similar line.
 - `Status.tsx` shows a `$ read` line (NO, or YES with the time) and different
   pending copy for "not read yet" and "read, waiting for a reply".
+
+## 10. The log on the status page
+
+- `Status.tsx` shows a `$ log` card under the status and read lines: the
+  sender's message (labelled `you`, with the time it was sent), then the
+  reply (labelled `them`) or `waiting for reply_` while there isn't one. It
+  replaces the old "THEIR REPLY" card.
+- The route is still `/status`, because the "they replied" texts link to
+  `/status?id=...`. A later full thread can reuse this card, one entry per
+  message.

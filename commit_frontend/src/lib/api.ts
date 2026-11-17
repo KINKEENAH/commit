@@ -64,6 +64,8 @@ export function markRead(id: string) {
 export function fetchStatus(id: string) {
   return request<{
     status: string;
+    message: string | null;
+    sent_at: string | null;
     response: string | null;
     responded_at: string | null;
     read_at: string | null;

@@ -34,3 +34,7 @@ class Confession(Base):
     reminder_count = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_reminded_at = Column(DateTime, nullable=True)
+    # When the confession was actually sent (created_at is when the draft was
+    # started, which can be well before). Shown as the time of the first
+    # entry in the sender's log.
+    sent_at = Column(DateTime, nullable=True)
