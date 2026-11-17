@@ -49,7 +49,10 @@ def _send(body: str, to_phone: str) -> None:
 
 def send_confession_link(to_phone: str, confession_id: str) -> None:
     base_url = os.getenv("APP_BASE_URL", "http://localhost:5173")
-    _send(f"Someone sent you a confession. {base_url}/r/{confession_id}", to_phone)
+    _send(
+        f"someone left you an anonymous message. Free, no login. Read it: {base_url}/r/{confession_id}Don't want to read? How about just a peak?👀",
+        to_phone,
+    )
 
 
 def send_reminder(to_phone: str, confession_id: str) -> None:
@@ -60,4 +63,7 @@ def send_reminder(to_phone: str, confession_id: str) -> None:
 def send_reply_alert(to_phone: str, confession_id: str) -> None:
     # Link only, never the reply text: an SMS isn't a private channel.
     base_url = os.getenv("APP_BASE_URL", "http://localhost:5173")
-    _send(f"commit.: they replied. See it here: {base_url}/status?id={confession_id}", to_phone)
+    _send(
+        f"commit.: they replied. See it here: {base_url}/status?id={confession_id}",
+        to_phone,
+    )
