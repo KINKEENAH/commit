@@ -50,7 +50,7 @@ def _send(body: str, to_phone: str) -> None:
 def send_confession_link(to_phone: str, confession_id: str) -> None:
     base_url = os.getenv("APP_BASE_URL", "http://localhost:5173")
     _send(
-        f"someone left you an anonymous message. Free, no login. Read it: {base_url}/r/{confession_id}Don't want to read? How about just a peak?👀",
+        f"someone left you an anonymous message. Free, no login. Read it: {base_url}/r/{confession_id}:Don't want to read? How about just a peak?👀",
         to_phone,
     )
 
