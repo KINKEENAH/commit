@@ -13,7 +13,7 @@ function formatWhen(iso: string): string {
 
 export default function Status() {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const stateId = (location.state as { id?: string } | null)?.id;
   // The "they replied" text links to /status?id=..., so the page also works
   // on a device that never sent the confession. Ids are 8 hex characters;
@@ -24,6 +24,7 @@ export default function Status() {
   // page work even after a refresh, when route state is gone.
   const id = stateId ?? queryId ?? localStorage.getItem("commit_last_confession_id");
 
+  const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<StatusValue | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [sentAt, setSentAt] = useState<string | null>(null);
@@ -31,6 +32,16 @@ export default function Status() {
   const [respondedAt, setRespondedAt] = useState<string | null>(null);
   const [readAt, setReadAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/status?id=${id}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard can be blocked; the address bar has the same link.
+    }
+  };
 
   useEffect(() => {
     if (!id) {
@@ -65,6 +76,12 @@ export default function Status() {
       if (timer) window.clearTimeout(timer);
     };
   }, [id]);
+
+  // Keep the id in the address bar, so the page can be bookmarked or opened
+  // on another device even when the id came from route state or localStorage.
+  useEffect(() => {
+    if (id && queryId !== id) setSearchParams({ id }, { replace: true });
+  }, [id, queryId, setSearchParams]);
 
   return (
     <div className="min-h-screen bg-bg px-6 py-10">
@@ -142,6 +159,15 @@ export default function Status() {
               </div>
             )}
           </>
+        )}
+
+        {id && (
+          <button
+            onClick={copyLink}
+            className="mt-4 text-xs font-mono text-text-secondary underline"
+          >
+            {copied ? "Link copied" : "Copy link to this page"}
+          </button>
         )}
       </div>
     </div>
